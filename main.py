@@ -17,11 +17,19 @@ def fetch_all_playlists_from_user(sp_client: spotipy.Spotify):
 
     logging.info(f"Playlist Name: {playlist_name}")
 
-    tracks = playlist['tracks']['items']
-    track_objs_list = list(map(lambda x: {
+    track_objs_list = []
+    current_offset = 0
+    while True:
+        items = sp_client.playlist_items(playlist_id=playlist_id, limit=50, offset=current_offset)
+        track_objs_list.extend(list(map(lambda x: {
             'uri': x['track']['uri'],
             'name': x['track']['name'],
-    }, tracks))
+        }, items['items'])))
+
+        if items['next'] is None:
+            break
+
+        current_offset = items['offset'] + items['limit']
 
     analyzed_tracks = analyze_tracks(sp_client, track_objs_list)
     create_new_playlist(sp_client, analyzed_tracks, playlist_name)
@@ -29,15 +37,23 @@ def fetch_all_playlists_from_user(sp_client: spotipy.Spotify):
 
 def analyze_tracks(sp_client: spotipy.Spotify, track_obj_list: list):
     track_uris = list(map(lambda x: x['uri'], track_obj_list))
-    audio_analysis = sp_client.audio_features(tracks=track_uris)
+    p_list = list(partition(track_uris, 100))
 
-    for track in track_obj_list:
-        for track_analysis in audio_analysis:
-            if track_analysis['uri'] == track['uri']:
-                track['bpm'] = track_analysis['tempo']
-                track['key'] = track_analysis['key']
+    for my_list in p_list:
+        audio_analysis = sp_client.audio_features(tracks=my_list)
+
+        for track in track_obj_list:
+            for track_analysis in audio_analysis:
+                if track_analysis['uri'] == track['uri']:
+                    track['bpm'] = track_analysis['tempo']
+                    track['key'] = track_analysis['key']
 
     return track_obj_list
+
+
+def partition(lst, size):
+    for i in range(0, len(lst), size):
+        yield lst[i: i + size]
 
 
 def create_new_playlist(sp_client: spotipy.Spotify, my_playlist: list, playlist_name: str):
@@ -69,7 +85,11 @@ def add_items_to_playlist(new_playlist, playlist_fluid, sp_client):
     track_uris = []
     for i in sorted(playlist_fluid.keys()):
         track_uris.extend(list(map(lambda x: x['uri'], playlist_fluid[i])))
-    sp_client.playlist_add_items(playlist_id=new_playlist_id, items=track_uris)
+
+    p_list = list(partition(track_uris, 100))
+
+    for my_list in p_list:
+        sp_client.playlist_add_items(playlist_id=new_playlist_id, items=my_list)
 
 
 def login_user():
