@@ -1,7 +1,9 @@
-from typing import List, Tuple
-from lib.src.models.track import Track
+from typing import List
+
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
+
+from lib.src.models.track import Track
 
 SCOPE = [
     "user-library-read",
@@ -30,9 +32,9 @@ class SpotifyClient:
         return self.client.playlist(playlist_id=playlist_id).get("name")
 
     def get_audio_features(self, tracks_name: List[str]) -> dict:
-        audio_analysis = self.audio_features(tracks=tracks_name)
+        audio_analysis = self.client.audio_features(tracks=tracks_name)
         return {
-            x.get("track").get("uri"): {
+            x.get("uri"): {
                 "bpm": x.get("tempo"),
                 "key": x.get("key"),
                 "mode": x.get("mode"),
@@ -42,21 +44,19 @@ class SpotifyClient:
         }
 
     def create_tracks(self, tracks: dict, with_audio: bool):
-        audio_feature = self.get_audio_feature(tracks.keys()) if with_audio else {}
-
+        audio_feature = self.get_audio_features(tracks.keys()) if with_audio else {}
         for music in audio_feature:
             tracks[music] = {**tracks[music], **audio_feature[music]}
-
         return [
             Track(
-                uri=music.get("uri"),
-                name=music.get("name"),
-                bpm=music.get("bpm"),
-                key=music.get("key"),
-                mode=music.get("mode"),
-                valence=music.get("valence"),
+                uri=tracks.get(idx).get("uri"),
+                name=tracks.get(idx).get("name"),
+                bpm=tracks.get(idx).get("bpm"),
+                key=tracks.get(idx).get("key"),
+                mode=tracks.get(idx).get("mode"),
+                valence=tracks.get(idx).get("valence"),
             )
-            for music in tracks
+            for idx in tracks
         ]
 
     def get_songs_from_playlist(

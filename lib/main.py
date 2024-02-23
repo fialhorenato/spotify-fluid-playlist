@@ -1,8 +1,8 @@
 import argparse
 import logging
 from argparse import Namespace
+
 from lib.src.playlist_creator import PlaylistCreator
-from src.models.track import Track
 
 scope = [
     "user-library-read",
@@ -10,6 +10,7 @@ scope = [
     "playlist-modify-public",
     "playlist-modify-private",
 ]
+
 
 def setup_args_parsing() -> Namespace:
     parser = argparse.ArgumentParser()
