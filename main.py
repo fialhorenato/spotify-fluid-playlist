@@ -1,6 +1,7 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import argparse
+import logging
 
 scope = [
     "user-library-read",
@@ -14,32 +15,35 @@ def fetch_all_playlists_from_user(sp_client: spotipy.Spotify):
     playlist = sp_client.playlist(playlist_id=playlist_id)
     playlist_name = playlist['name']
 
-    print(f"----------- Playlist name = {playlist_name} -----------")
+    logging.info(f"Playlist Name: {playlist_name}")
 
-    tracks = playlist['tracks']
-    my_playlist = []
+    tracks = playlist['tracks']['items']
+    track_objs_list = list(map(lambda x: {
+            'uri': x['track']['uri'],
+            'name': x['track']['name'],
+    }, tracks))
 
-    for track in tracks['items']:
-        track_id = track['track']['id']
-        audio_analysis = sp_client.audio_analysis(track_id=track_id)
-        my_track = {
-            'name': track['track']['name'],
-            'uri': track['track']['uri'],
-            'bpm': audio_analysis['track']['tempo'],
-            'key': audio_analysis['track']['key']
-        }
-        my_playlist.append(my_track)
-
-    create_new_playlist(sp_client, my_playlist, playlist_name)
+    analyzed_tracks = analyze_tracks(sp_client, track_objs_list)
+    create_new_playlist(sp_client, analyzed_tracks, playlist_name)
 
 
+def analyze_tracks(sp_client: spotipy.Spotify, track_obj_list: list):
+    track_uris = list(map(lambda x: x['uri'], track_obj_list))
+    audio_analysis = sp_client.audio_features(tracks=track_uris)
+
+    for track in track_obj_list:
+        for track_analysis in audio_analysis:
+            if track_analysis['uri'] == track['uri']:
+                track['bpm'] = track_analysis['tempo']
+                track['key'] = track_analysis['key']
+
+    return track_obj_list
 
 
 def create_new_playlist(sp_client: spotipy.Spotify, my_playlist: list, playlist_name: str):
     playlist_fluid = {}
 
     for track in my_playlist:
-        print(track)
         my_list = playlist_fluid.get(track['key'], [])
         my_list.append(track)
         playlist_fluid[track['key']] = my_list
@@ -61,7 +65,7 @@ def create_new_playlist(sp_client: spotipy.Spotify, my_playlist: list, playlist_
 
     for i in sorted(playlist_fluid.keys()):
         for track in playlist_fluid.get(i):
-            print(f"Adding {track['name']} to playlist {playlist_name}")
+            logging.info(f"Adding {track['name']} to playlist {playlist_name}")
             sp_client.playlist_add_items(playlist_id=new_playlist_id, items=[track['uri']])
 
 
@@ -71,6 +75,9 @@ def login_user():
 
 
 if __name__ == "__main__":
+    logging.basicConfig()
+    logger = logging.getLogger('test')
+    logging.root.setLevel(logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("playlist_id", type=str, help="Id of the playlist on spotify")
     args = parser.parse_args()
