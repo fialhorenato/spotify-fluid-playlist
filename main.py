@@ -1,6 +1,7 @@
 import argparse
 import logging
 from argparse import Namespace
+from track import Track
 
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
@@ -11,24 +12,6 @@ scope = [
     "playlist-modify-public",
     "playlist-modify-private",
 ]
-
-
-class Track:
-    def __init__(self, uri, name):
-        self.key = None
-        self.mode = None
-        self.bpm = None
-        self.uri = uri
-        self.name = name
-
-    def set_bpm(self, bpm: int):
-        self.bpm = bpm
-
-    def set_key(self, key: int):
-        self.key = key
-
-    def set_mode(self, mode: int):
-        self.mode = mode
 
 
 def main():
@@ -120,9 +103,12 @@ def setup_args_parsing() -> Namespace:
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def setup_logging():
     logging.basicConfig()
     logging.root.setLevel(logging.INFO)
+
+
+if __name__ == "__main__":
     args = setup_args_parsing()
     playlist_id = args.playlist_id
     spotify_client = login_user()
