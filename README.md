@@ -1,5 +1,9 @@
 # Spotify Fluid Playlist Generator
 
+
+## DISCLAIMER : This works better with playlists that contains electronic musics
+
+
 This project born as a need of mine to create a more fluid playlist
 based on key + bpm.
 
