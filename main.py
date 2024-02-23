@@ -7,7 +7,7 @@ scope = [
     "user-library-read",
     "playlist-read-private",
     "playlist-modify-public",
-    "playlist-modify-private"
+    "playlist-modify-private",
 ]
 
 
@@ -61,12 +61,15 @@ def create_new_playlist(sp_client: spotipy.Spotify, my_playlist: list, playlist_
         collaborative=False
     )
 
-    new_playlist_id = new_playlist['id']
+    add_items_to_playlist(new_playlist, playlist_fluid, sp_client)
 
+
+def add_items_to_playlist(new_playlist, playlist_fluid, sp_client):
+    new_playlist_id = new_playlist['id']
+    track_uris = []
     for i in sorted(playlist_fluid.keys()):
-        for track in playlist_fluid.get(i):
-            logging.info(f"Adding {track['name']} to playlist {playlist_name}")
-            sp_client.playlist_add_items(playlist_id=new_playlist_id, items=[track['uri']])
+        track_uris.extend(list(map(lambda x: x['uri'], playlist_fluid[i])))
+    sp_client.playlist_add_items(playlist_id=new_playlist_id, items=track_uris)
 
 
 def login_user():
