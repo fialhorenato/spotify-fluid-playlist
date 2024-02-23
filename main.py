@@ -11,7 +11,7 @@ scope = [
 ]
 
 
-def fetch_all_playlists_from_user():
+def main():
     playlist = spotify_client.playlist(playlist_id=playlist_id)
     playlist_name = playlist['name']
 
@@ -96,13 +96,16 @@ def login_user():
     return spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
 
-if __name__ == "__main__":
-    logging.basicConfig()
-    logger = logging.getLogger('test')
-    logging.root.setLevel(logging.INFO)
+def setup_args_parsing():
     parser = argparse.ArgumentParser()
     parser.add_argument("playlist_id", type=str, help="Id of the playlist on spotify")
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    logging.basicConfig()
+    logging.root.setLevel(logging.INFO)
+    args = setup_args_parsing()
     playlist_id = args.playlist_id
     spotify_client = login_user()
-    fetch_all_playlists_from_user()
+    main()
