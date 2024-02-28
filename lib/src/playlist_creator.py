@@ -4,6 +4,7 @@ from lib.src.client.spotify_client import SpotifyClient
 from lib.src.models.track import Track
 from lib.src.sorted_engine import sort_tracks_by_bpm
 from lib.src.utils.utils import partition
+from lib.src.utils.keys_graph import change_pitch_to_camelot
 
 
 class PlaylistCreator:
