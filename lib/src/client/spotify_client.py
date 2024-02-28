@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Any
 
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 
 from lib.src.models.track import Track
+from lib.src.utils.keys_graph import change_pitch_to_camelot
 
 SCOPE = [
     "user-library-read",
@@ -43,7 +44,7 @@ class SpotifyClient:
             for x in audio_analysis
         }
 
-    def create_tracks(self, tracks: dict, with_audio: bool):
+    def create_tracks(self, tracks: dict[str, Any], with_audio: bool):
         audio_feature = self.get_audio_features(tracks.keys()) if with_audio else {}
         for music in audio_feature:
             tracks[music] = {**tracks[music], **audio_feature[music]}
@@ -55,6 +56,7 @@ class SpotifyClient:
                 key=tracks.get(idx).get("key"),
                 mode=tracks.get(idx).get("mode"),
                 valence=tracks.get(idx).get("valence"),
+                camelot_key=change_pitch_to_camelot(tracks.get(idx).get("key"),tracks.get(idx).get("mode"))
             )
             for idx in tracks
         ]
